@@ -1,4 +1,5 @@
-use warp::{Reply, ws::WebSocket, Rejection};
+pub mod handler;
+pub mod ws;
 
 pub const GREETING: &str = r#"Welcome to opcode server!
 
@@ -11,14 +12,3 @@ Index 0 is an opcode of the following:
 
 If no exit opcode is sent, I will accept further opcodes.
 "#;
-
-pub type Result<T> = std::result::Result<T, Rejection>;
-
-pub async fn opcode_handler(ws: warp::ws::Ws) -> Result<impl Reply> {
-    println!("opcode_handler");
-    Ok(ws.on_upgrade(move |socket| client_connection(socket)))
-}
-
-pub async fn client_connection(ws: WebSocket) {
-    println!("Established client connection: {:?}", ws);
-}
