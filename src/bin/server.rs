@@ -1,10 +1,13 @@
 use warp::Filter;
 
-use opcode::server::GREETING;
+use opcode::server::opcode_handler;
 
 #[tokio::main]
 async fn main() {
-    let greeting = warp::path!().map(|| GREETING);
+    println!("Configuring websocket route");
+    let opcode_route = warp::path("opcode").and(warp::ws()).and_then(opcode_handler);
 
-    warp::serve(greeting).run(([127, 0, 0, 1], 8000)).await;
+    let routes = opcode_route.with(warp::cors().allow_any_origin());
+    println!("Starting server");
+    warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
 }
