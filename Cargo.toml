@@ -10,8 +10,6 @@ name = "opcode"
 name = "opcs"
 path = "src/bin/server.rs"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 futures = "0.3.19"
 tokio = { version = "1.15.0", features = ["full"] }
