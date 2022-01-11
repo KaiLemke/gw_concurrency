@@ -38,32 +38,36 @@ pub async fn client_connection(ws: WebSocket, clients: Clients) {
                 break;
             }
         };
-        client_msg(&uuid, msg, &clients).await;
+        if client_msg(&uuid, msg, &clients).await {
+            break;
+        }
     }
 
     clients.lock().await.remove(&uuid);
     println!("{} disconnected", uuid);
 }
 
-async fn client_msg(client_id: &str, msg: Message, clients: &Clients) {
+async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
     println!("received message from {}: {:?}", client_id, msg);
 
     let message = match msg.to_str() {
         Ok(v) => v,
-        Err(_) => return,
+        Err(_) => return true,
     };
+    if message == "quit" || message == "quit\n" {
+        return true;
+    }
 
-    if message == "ping" || message == "ping\n" {
-        let locked = clients.lock().await;
-        match locked.get(client_id) {
-            Some(v) => {
-                if let Some(sender) = &v.sender {
-                    println!("sending pong");
-                    let _ = sender.send(Ok(Message::text("pong")));
-                }
+    let locked = clients.lock().await;
+    match locked.get(client_id) {
+        Some(v) => {
+            if let Some(sender) = &v.sender {
+                println!("sending echo message");
+                let _ = sender.send(Ok(Message::text(message)));
             }
-            None => return,
         }
-        return;
-    };
+        None => return true,
+    }
+
+    false
 }
