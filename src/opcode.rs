@@ -6,19 +6,19 @@
 /// This is needed to know where to find arguments for calculation.
 #[derive(PartialEq, Eq, Debug)]
 pub enum OpCode {
-    /// Add to numbers
+    /// 1 - Add to numbers
     /// 
     /// Takes the three indices following the opcode,
     /// adds the number identified by the second to that identified by the first and
     /// inserts it at position specified by the third.
     Add(usize),
-    /// Multiply two numbers
+    /// 2 - Multiply two numbers
     /// 
     /// Takes the three indices following the opcode,
     /// multiplies the number at the first and second and
     /// inserts it at posision specified by the third.
     Mul(usize),
-    /// Stop calculating intcodes and close connection
+    /// 99 - Stop calculating intcodes and close connection
     Halt,
 }
 
