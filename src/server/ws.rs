@@ -77,10 +77,10 @@ async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
     let message = match msg.to_str() {
         Ok(v) => v,
         Err(_) => return true,
-    };
+    }.trim();
 
     // Handle the client's wish to unregister.
-    if message == "quit" || message == "quit\n" {
+    if message == "quit" {
         return true;
     }
 
