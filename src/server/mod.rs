@@ -7,13 +7,16 @@ use warp::{ws::Message, Filter};
 pub mod handler;
 pub mod ws;
 
+/// The buffer size for `mpsc::channel`s for client connections
+pub const CLIENT_CONN_SIZE: usize = 42;
+
 /// A Client
 #[derive(Debug, Clone)]
 pub struct Client {
     /// The client's UUID
     pub client_id: String,
     /// Communication channel sender end
-    pub sender: Option<mpsc::UnboundedSender<Result<Message, warp::Error>>>,
+    pub sender: Option<mpsc::Sender<Result<Message, warp::Error>>>,
 }
 
 /// A list of registered clients keyed by UUIDs
