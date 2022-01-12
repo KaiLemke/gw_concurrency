@@ -1,16 +1,16 @@
 //! Manages `WebSocket` connections with clients.
 
+use futures::{FutureExt, StreamExt};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use warp::ws::{Message, WebSocket};
-use futures::{FutureExt, StreamExt};
 use uuid::Uuid;
+use warp::ws::{Message, WebSocket};
 
 use super::Client;
 use super::Clients;
 
 /// Registers a new client, communicates with it and removes it afterwards.
-/// 
+///
 /// The actual message handling is done by `client_msg`.
 ///
 /// TODO: Using unbounded channels may be not the best choice, because we may run out of memory.
@@ -59,17 +59,17 @@ pub async fn client_connection(ws: WebSocket, clients: Clients) {
 /// Handles messages from the client.
 ///
 /// This function currently acts as an echo server except if a 'quit' message arrives.
-/// 
+///
 /// # Arguments
 /// * `client_id` - The `Client`'s UUID
 /// * `msg` - The `Message` the client sendt
 /// * `clients` - The shared map list of registered clients
-/// 
+///
 /// # Returns
 /// Returns `true` if a 'quit' message arrived or an error occurred.
 /// This indicates that the we don't expect further messages from the client
 /// and it can be removed from `clients`.
-/// 
+///
 /// If further messages are expected, `false` is returned.
 async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
     println!("received message from {}: {:?}", client_id, msg);

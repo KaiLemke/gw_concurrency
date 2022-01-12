@@ -1,3 +1,3 @@
-pub mod server;
 pub mod opcode;
-pub use opcode::OpCode;
+pub mod server;
+pub use crate::opcode::OpCode;
