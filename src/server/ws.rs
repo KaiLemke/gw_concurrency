@@ -22,7 +22,7 @@ pub async fn client_connection(ws: WebSocket, clients: Clients) {
     let (client_sender, client_rcv) = mpsc::unbounded_channel();
     let client_rcv = UnboundedReceiverStream::new(client_rcv);
 
-    // Keep the stream running.
+    println!("spawning a new client connection task");
     tokio::task::spawn(client_rcv.forward(client_ws_sender).map(|result| {
         if let Err(e) = result {
             eprintln!("error sending websocket msg: {}", e);
