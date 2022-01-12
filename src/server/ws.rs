@@ -78,22 +78,20 @@ async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
         Ok(v) => v,
         Err(_) => return true,
     }.trim();
-
-    // Handle the client's wish to unregister.
-    if message == "quit" {
-        return true;
-    }
+    let (message, quit) = match message {
+        "quit" => (Message::close(), true),
+        _ => (Message::text(message), false),
+    };
 
     let locked = clients.lock().await;
     match locked.get(client_id) {
         Some(v) => {
             if let Some(sender) = &v.sender {
-                println!("sending echo message");
-                let _ = sender.send(Ok(Message::text(message)));
+                println!("sending message: {:?}", message);
+                let _ = sender.send(Ok(message));
             }
+            quit
         }
-        None => return true,
+        None => true,
     }
-
-    false
 }
