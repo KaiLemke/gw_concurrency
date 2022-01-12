@@ -8,23 +8,27 @@ pub mod handler;
 pub mod ws;
 
 /// Game instructions
-pub const HELP: &str = r#"Welcome to opcode server!
+// We have to serve it as slice because web socket messages are whitespace trimed
+// and we cannot use map in `ws::client_msg()`.
+pub const HELP: [&str; 7] = [
+    "You can send me an intcode, i.e. a list of integers like '1,0,0,3,2,0,3,6,99'.",
+    "Index 0 is an opcode of the following: ",
+    "-  1 - add     : Adds together numbers read from two positions and stores a result in a third position.",
+    "-  2 - multiply: Does the same as 1 but with multiplication.",
+    "- 99 - exit    : Exits the program, i.e. closes the connection immediately.",
+    "Multiple opcodes can be sent in one intcode.",
+    "If no exit opcode is sent, I will accept further opcodes."
+];
 
-You can send me an intcode, i.e. a list of integers like '1,0,0,3,2,0,3,6,99'.
-
-To do that you, please connect to ws://127.0.0.1:8000/opcode
-and I will give you back the modified opcode.
-
-Index 0 is an opcode of the following:
-    -  1 - add     : Adds together numbers read from two positions
-                     and stores a result in a third position.
-    -  2 - multiply: Does the same as 1 but with multiplication.
-    - 99 - exit    : Exits the program, i.e. closes the connection immediately.
-
-Multiple opcodes can be sent in one intcode.
-
-If no exit opcode is sent, I will accept further opcodes.
-"#;
+/// The servers greeting
+pub fn greeting() -> String {
+    format!(
+        "Welcome to opcode server!\n\n{}\n\n{}\n\n{}\n{}\n{}\n{}\n{}\n\n{}\n",
+        HELP[0],
+        "To do that you, please connect to ws://127.0.0.1:8000/opcode and I will give you back the modified opcode.",
+        HELP[1], HELP[2], HELP[3], HELP[4], HELP[5], HELP[6]
+    )
+}
 
 /// A Client
 #[derive(Debug, Clone)]
