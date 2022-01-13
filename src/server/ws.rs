@@ -71,7 +71,7 @@ pub async fn client_connection(ws: WebSocket, clients: Clients) {
 /// and it can be removed from `clients`.
 ///
 /// If further messages are expected, `false` is returned.
-async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
+pub async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
     println!("received message from {}: {:?}", client_id, msg);
 
     let message = match msg.to_str() {
