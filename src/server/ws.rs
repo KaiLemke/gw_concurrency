@@ -2,26 +2,25 @@
 
 use futures::{FutureExt, StreamExt};
 use tokio::sync::mpsc;
-use tokio_stream::wrappers::UnboundedReceiverStream;
+use tokio_stream::wrappers::ReceiverStream;
 use uuid::Uuid;
 use warp::ws::{Message, WebSocket};
 
 use super::Client;
 use super::Clients;
+use super::CLIENT_CONN_SIZE;
 use super::HELP;
 
 /// Registers a new client, communicates with it and removes it afterwards.
 ///
 /// The actual message handling is done by `client_msg`.
-///
-/// TODO: Using unbounded channels may be not the best choice, because we may run out of memory.
 pub async fn client_connection(ws: WebSocket, clients: Clients) {
     println!("Established client connection: {:?}", ws);
 
     // Setup the communication channel.
     let (client_ws_sender, mut client_ws_rcv) = ws.split();
-    let (client_sender, client_rcv) = mpsc::unbounded_channel();
-    let client_rcv = UnboundedReceiverStream::new(client_rcv);
+    let (client_sender, client_rcv) = mpsc::channel(CLIENT_CONN_SIZE);
+    let client_rcv = ReceiverStream::new(client_rcv);
 
     println!("spawning a new client connection task");
     tokio::task::spawn(client_rcv.forward(client_ws_sender).map(|result| {
@@ -116,7 +115,7 @@ async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
             if let Some(sender) = &v.sender {
                 for message in messages {
                     println!("sending message: {:?}", message);
-                    let _ = sender.send(Ok(message));
+                    let _ = sender.send(Ok(message)).await;
                 }
             }
             quit
