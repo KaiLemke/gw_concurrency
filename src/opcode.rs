@@ -50,6 +50,35 @@ pub enum OpCode {
 }
 
 impl OpCode {
+    /// Processes a complete `OpCode`.
+    ///
+    /// Starts at index 0 by calling `new` and `execute`
+    /// and goes on with the next index until finding an `Err` or `Ok(None)`.
+    ///
+    /// # Examples
+    /// ```
+    /// use opcode::opcode::{Error, OpCode};
+    ///
+    /// let mut tst_cmd_list = vec![1, 0, 0, 3, 2, 0, 3, 6, 99, 1, 0, 1, 4];
+    /// assert_eq!(Ok(vec![1, 0, 0, 2, 2, 0, 2, 6, 99, 1, 0, 1, 4]), OpCode::process(tst_cmd_list));
+    ///
+    /// let mut out_of_bounds_list = vec![1, 0, 0, 100, 2, 0, 3, 6, 99];
+    /// assert_eq!(Err(Error::InvalidResult), OpCode::process(out_of_bounds_list));
+    ///
+    /// let mut invalid_opcode_list = vec![42, 1, 2, 3, 99];
+    /// assert_eq!(Err(Error::InvalidOpCode), OpCode::process(invalid_opcode_list));
+    ///
+    /// let mut too_short_list = vec![1,0];
+    /// assert_eq!(Err(Error::MissingArgs), OpCode::process(too_short_list));
+    /// ```
+    pub fn process(mut cmd_list: Vec<usize>) -> Result<Vec<usize>> {
+        let mut idx = Some(0);
+        while idx.is_some() {
+            idx = OpCode::new(idx.unwrap(), &cmd_list)?.execute(&mut cmd_list)?;
+        }
+        Ok(cmd_list)
+    }
+
     /// Executes the command identified by the `OpCode`.
     ///
     /// # Arguments
