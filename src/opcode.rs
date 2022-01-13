@@ -55,6 +55,8 @@ impl OpCode {
     /// If any of the specified indices is out of bounds `Err(Error::IndexOutOfBounds)` is returned.
     ///
     /// # Examples
+    /// 
+    /// A successful processing could look like this:
     /// ```
     /// use opcode::OpCode;
     ///
@@ -85,18 +87,18 @@ impl OpCode {
     pub fn execute(&self, cmd_list: &mut Vec<usize>) -> Result<Option<usize>> {
         match self {
             Self::Add(idx) => {
-                let _ = cmd_list[..].get(idx + 3).ok_or(Error::IndexOutOfBounds)?;
-                let idx_op1 = cmd_list[idx + 1];
-                let idx_op2 = cmd_list[idx + 2];
-                let idx_dst = cmd_list[idx + 3];
+                let &idx_op1 = cmd_list.get(idx + 1).ok_or(Error::IndexOutOfBounds)?;
+                let &idx_op2 = cmd_list.get(idx + 2).ok_or(Error::IndexOutOfBounds)?;
+                let &idx_dst = cmd_list.get(idx + 3).ok_or(Error::IndexOutOfBounds)?;
+                let _ =  cmd_list.get(idx_dst).ok_or(Error::IndexOutOfBounds)?;
                 cmd_list[idx_dst] = cmd_list[idx_op1] + cmd_list[idx_op2];
                 Ok(Some(idx + 4))
             }
             Self::Mul(idx) => {
-                let _ = cmd_list[..].get(idx + 3).ok_or(Error::IndexOutOfBounds)?;
-                let idx_op1 = cmd_list[idx + 1];
-                let idx_op2 = cmd_list[idx + 2];
-                let idx_dst = cmd_list[idx + 3];
+                let &idx_op1 = cmd_list.get(idx + 1).ok_or(Error::IndexOutOfBounds)?;
+                let &idx_op2 = cmd_list.get(idx + 2).ok_or(Error::IndexOutOfBounds)?;
+                let &idx_dst = cmd_list.get(idx + 3).ok_or(Error::IndexOutOfBounds)?;
+                let _ =  cmd_list.get(idx_dst).ok_or(Error::IndexOutOfBounds)?;
                 cmd_list[idx_dst] = cmd_list[idx_op1] * cmd_list[idx_op2];
                 Ok(Some(idx + 4))
             }
@@ -155,5 +157,35 @@ mod tests {
         assert_eq!(OpCode::parse(0, 2), Ok(OpCode::Mul(0)));
         assert_eq!(OpCode::parse(0, 99), Ok(OpCode::Halt));
         assert_eq!(OpCode::parse(0, 1337), Err(Error::InvalidOpCode));
+    }
+
+    #[test]
+    fn tst_add_too_short() {
+        let mut cmd_list = vec![1, 2];
+        let opcode = OpCode::new(0, &cmd_list).unwrap();
+        assert_eq!(Err(Error::IndexOutOfBounds), opcode.execute(&mut cmd_list));
+
+        cmd_list = vec![1, 2, 3];
+        let opcode = OpCode::new(0, &cmd_list).unwrap();
+        assert_eq!(Err(Error::IndexOutOfBounds), opcode.execute(&mut cmd_list));
+
+        cmd_list = vec![1, 2, 3, 42];
+        let opcode = OpCode::new(0, &cmd_list).unwrap();
+        assert_eq!(Err(Error::IndexOutOfBounds), opcode.execute(&mut cmd_list));
+    }
+
+    #[test]
+    fn tst_mul_too_short() {
+        let mut cmd_list = vec![2, 2];
+        let opcode = OpCode::new(0, &cmd_list).unwrap();
+        assert_eq!(Err(Error::IndexOutOfBounds), opcode.execute(&mut cmd_list));
+
+        cmd_list = vec![2, 2, 3];
+        let opcode = OpCode::new(0, &cmd_list).unwrap();
+        assert_eq!(Err(Error::IndexOutOfBounds), opcode.execute(&mut cmd_list));
+
+        cmd_list = vec![2, 2, 3, 42];
+        let opcode = OpCode::new(0, &cmd_list).unwrap();
+        assert_eq!(Err(Error::IndexOutOfBounds), opcode.execute(&mut cmd_list));
     }
 }
