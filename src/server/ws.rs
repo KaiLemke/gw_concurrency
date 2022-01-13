@@ -8,6 +8,7 @@ use warp::ws::{Message, WebSocket};
 
 use super::Client;
 use super::Clients;
+use super::HELP;
 
 /// Registers a new client, communicates with it and removes it afterwards.
 ///
@@ -77,23 +78,49 @@ async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
     let message = match msg.to_str() {
         Ok(v) => v,
         Err(_) => return true,
-    };
-
-    // Handle the client's wish to unregister.
-    if message == "quit" || message == "quit\n" {
-        return true;
     }
+    .trim();
+    let (messages, quit) = match message {
+        "quit" => (vec![Message::close()], true),
+        // The `Filter` trait blocks using `.map()` so we have to do it manually.
+        "help" => (
+            vec![
+                Message::text(HELP[0]),
+                Message::text(HELP[1]),
+                Message::text(HELP[2]),
+                Message::text(HELP[3]),
+                Message::text(HELP[4]),
+                Message::text(HELP[5]),
+                Message::text(HELP[6]),
+            ],
+            false,
+        ),
+        "h" => (
+            vec![
+                Message::text(HELP[0]),
+                Message::text(HELP[1]),
+                Message::text(HELP[2]),
+                Message::text(HELP[3]),
+                Message::text(HELP[4]),
+                Message::text(HELP[5]),
+                Message::text(HELP[6]),
+            ],
+            false,
+        ),
+        _ => (vec![Message::text(message)], false),
+    };
 
     let locked = clients.lock().await;
     match locked.get(client_id) {
         Some(v) => {
             if let Some(sender) = &v.sender {
-                println!("sending echo message");
-                let _ = sender.send(Ok(Message::text(message)));
+                for message in messages {
+                    println!("sending message: {:?}", message);
+                    let _ = sender.send(Ok(message));
+                }
             }
+            quit
         }
-        None => return true,
+        None => true,
     }
-
-    false
 }
