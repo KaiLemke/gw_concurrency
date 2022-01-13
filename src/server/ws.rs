@@ -9,6 +9,7 @@ use warp::ws::{Message, WebSocket};
 use super::Client;
 use super::Clients;
 use super::CLIENT_CONN_SIZE;
+use super::HELP;
 
 /// Registers a new client, communicates with it and removes it afterwards.
 ///
@@ -21,7 +22,7 @@ pub async fn client_connection(ws: WebSocket, clients: Clients) {
     let (client_sender, client_rcv) = mpsc::channel(CLIENT_CONN_SIZE);
     let client_rcv = ReceiverStream::new(client_rcv);
 
-    // Keep the stream running.
+    println!("spawning a new client connection task");
     tokio::task::spawn(client_rcv.forward(client_ws_sender).map(|result| {
         if let Err(e) = result {
             eprintln!("error sending websocket msg: {}", e);
@@ -76,23 +77,49 @@ async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
     let message = match msg.to_str() {
         Ok(v) => v,
         Err(_) => return true,
-    };
-
-    // Handle the client's wish to unregister.
-    if message == "quit" || message == "quit\n" {
-        return true;
     }
+    .trim();
+    let (messages, quit) = match message {
+        "quit" => (vec![Message::close()], true),
+        // The `Filter` trait blocks using `.map()` so we have to do it manually.
+        "help" => (
+            vec![
+                Message::text(HELP[0]),
+                Message::text(HELP[1]),
+                Message::text(HELP[2]),
+                Message::text(HELP[3]),
+                Message::text(HELP[4]),
+                Message::text(HELP[5]),
+                Message::text(HELP[6]),
+            ],
+            false,
+        ),
+        "h" => (
+            vec![
+                Message::text(HELP[0]),
+                Message::text(HELP[1]),
+                Message::text(HELP[2]),
+                Message::text(HELP[3]),
+                Message::text(HELP[4]),
+                Message::text(HELP[5]),
+                Message::text(HELP[6]),
+            ],
+            false,
+        ),
+        _ => (vec![Message::text(message)], false),
+    };
 
     let locked = clients.lock().await;
     match locked.get(client_id) {
         Some(v) => {
             if let Some(sender) = &v.sender {
-                println!("sending echo message");
-                let _ = sender.send(Ok(Message::text(message))).await;
+                for message in messages {
+                    println!("sending message: {:?}", message);
+                    let _ = sender.send(Ok(message)).await;
+                }
             }
+            quit
         }
-        None => return true,
+        None => true,
     }
-
-    false
 }
