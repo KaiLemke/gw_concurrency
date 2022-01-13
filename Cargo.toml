@@ -11,8 +11,11 @@ name = "opcs"
 path = "src/bin/server.rs"
 
 [dependencies]
+displaydoc = "0.2.3"
 futures = "0.3.19"
 tokio = { version = "1.15.0", features = ["full"] }
 tokio-stream = "0.1.8"
 uuid = { version = "0.8.2", features = ["v4"] }
 warp = "0.3.2"
+
+[features]

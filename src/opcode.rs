@@ -1,5 +1,22 @@
 //! Calculating intcodes depending on opcodes in intcodes
 
+use displaydoc::Display;
+use std::error;
+
+/// Any Errors returned creating `OpCode`s or executing them
+#[derive(Debug, Display, PartialEq, Eq)]
+pub enum Error {
+    /// There is no `OpCode` associated with the number found at the given index.
+    InvalidOpCode,
+    /// The given intcode does not contain all given indices.
+    IndexOutOfBounds,
+}
+
+impl error::Error for Error {}
+
+/// The result of any operation related to `OpCode`s
+pub type Result<T> = std::result::Result<T, Error>;
+
 /// An opcode representing a calculation operation
 ///
 /// Most variants hold an index of the intcode where they were parsed from.
@@ -35,7 +52,7 @@ impl OpCode {
     /// If everything goes well, the index of the next opcode in `cmd_list` is returned as `Ok` variant.
     ///
     /// # Errors
-    /// If any of the specified indices is out of bounds `Err("index out of bounds")` is returned.
+    /// If any of the specified indices is out of bounds `Err(Error::IndexOutOfBounds)` is returned.
     ///
     /// # Examples
     /// ```
@@ -65,12 +82,10 @@ impl OpCode {
     /// assert_eq!(new_idx, None);
     /// assert_eq!(tst_cmd_list[..], exp);
     /// ```
-    pub fn execute(&self, cmd_list: &mut Vec<usize>) -> Result<Option<usize>, String> {
+    pub fn execute(&self, cmd_list: &mut Vec<usize>) -> Result<Option<usize>> {
         match self {
             Self::Add(idx) => {
-                let _ = cmd_list[..]
-                    .get(idx + 3)
-                    .ok_or("execute(): index out of bounds")?;
+                let _ = cmd_list[..].get(idx + 3).ok_or(Error::IndexOutOfBounds)?;
                 let idx_op1 = cmd_list[idx + 1];
                 let idx_op2 = cmd_list[idx + 2];
                 let idx_dst = cmd_list[idx + 3];
@@ -78,9 +93,7 @@ impl OpCode {
                 Ok(Some(idx + 4))
             }
             Self::Mul(idx) => {
-                let _ = cmd_list[..]
-                    .get(idx + 3)
-                    .ok_or("execute(): index out of bounds")?;
+                let _ = cmd_list[..].get(idx + 3).ok_or(Error::IndexOutOfBounds)?;
                 let idx_op1 = cmd_list[idx + 1];
                 let idx_op2 = cmd_list[idx + 2];
                 let idx_dst = cmd_list[idx + 3];
@@ -91,12 +104,12 @@ impl OpCode {
         }
     }
 
-    fn parse(idx: usize, opcode: usize) -> Result<Self, &'static str> {
+    fn parse(idx: usize, opcode: usize) -> Result<Self> {
         match opcode {
             1 => Ok(OpCode::Add(idx)),
             2 => Ok(OpCode::Mul(idx)),
             99 => Ok(OpCode::Halt),
-            _ => Err("invalid op code"),
+            _ => Err(Error::InvalidOpCode),
         }
     }
 
@@ -110,23 +123,23 @@ impl OpCode {
     /// If the number at `idx` is a valid opcode the according `OpCode` variant is returned as `Ok`.
     ///
     /// # Errors
-    /// If `cmd_list` has no index `idx` `Err("index out of bounds")` is retuned.
+    /// If `cmd_list` has no index `idx` `Err(Error::IndexOutOfBounds)` is retuned.
     ///
-    /// If there is no `OpCode` variant identified by the given number `Err("invalid op code")` is returned.
+    /// If there is no `OpCode` variant identified by the given number `Err(Error::InvalidOpCode)` is returned.
     ///
     /// # Examples
     /// ```
-    /// use opcode::OpCode;
+    /// use opcode::opcode::{Error, OpCode};
     ///
     /// let mut tst_vec = vec![1, 2, 3, 4, 2, 3, 4, 5, 99];
     /// assert_eq!(OpCode::new(0, &mut tst_vec), Ok(OpCode::Add(0)));
     /// assert_eq!(OpCode::new(4, &mut tst_vec), Ok(OpCode::Mul(4)));
     /// assert_eq!(OpCode::new(8, &mut tst_vec), Ok(OpCode::Halt));
-    /// assert_eq!(OpCode::new(2, &mut tst_vec), Err("invalid op code"));
-    /// assert_eq!(OpCode::new(100, &mut tst_vec), Err("index out of bounds"));
+    /// assert_eq!(OpCode::new(2, &mut tst_vec), Err(Error::InvalidOpCode));
+    /// assert_eq!(OpCode::new(100, &mut tst_vec), Err(Error::IndexOutOfBounds));
     /// ```
-    pub fn new(idx: usize, cmd_list: &[usize]) -> Result<Self, &str> {
-        let cmd_list_slice = cmd_list[..].get(idx).ok_or("index out of bounds")?;
+    pub fn new(idx: usize, cmd_list: &[usize]) -> Result<Self> {
+        let cmd_list_slice = cmd_list[..].get(idx).ok_or(Error::IndexOutOfBounds)?;
         Self::parse(idx, *cmd_list_slice)
     }
 }
@@ -140,6 +153,6 @@ mod tests {
         assert_eq!(OpCode::parse(0, 1), Ok(OpCode::Add(0)));
         assert_eq!(OpCode::parse(0, 2), Ok(OpCode::Mul(0)));
         assert_eq!(OpCode::parse(0, 99), Ok(OpCode::Halt));
-        assert_eq!(OpCode::parse(0, 1337), Err("invalid op code"));
+        assert_eq!(OpCode::parse(0, 1337), Err(Error::InvalidOpCode));
     }
 }
