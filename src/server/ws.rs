@@ -82,19 +82,7 @@ async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
     let (messages, quit) = match message {
         "quit" => (vec![Message::close()], true),
         // The `Filter` trait blocks using `.map()` so we have to do it manually.
-        "help" => (
-            vec![
-                Message::text(HELP[0]),
-                Message::text(HELP[1]),
-                Message::text(HELP[2]),
-                Message::text(HELP[3]),
-                Message::text(HELP[4]),
-                Message::text(HELP[5]),
-                Message::text(HELP[6]),
-            ],
-            false,
-        ),
-        "h" => (
+        "h" | "help" => (
             vec![
                 Message::text(HELP[0]),
                 Message::text(HELP[1]),
