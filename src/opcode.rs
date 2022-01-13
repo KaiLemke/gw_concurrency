@@ -139,8 +139,8 @@ impl OpCode {
     /// assert_eq!(OpCode::new(100, &mut tst_vec), Err(Error::IndexOutOfBounds));
     /// ```
     pub fn new(idx: usize, cmd_list: &[usize]) -> Result<Self> {
-        let cmd_list_slice = cmd_list[..].get(idx).ok_or(Error::IndexOutOfBounds)?;
-        Self::parse(idx, *cmd_list_slice)
+        let &opcode = cmd_list.get(idx).ok_or(Error::IndexOutOfBounds)?;
+        Self::parse(idx, opcode)
     }
 }
 
