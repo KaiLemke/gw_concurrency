@@ -1,5 +1,7 @@
 //! Manages `WebSocket` connections with clients.
 
+use std::str::FromStr;
+
 use futures::{FutureExt, StreamExt};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
@@ -10,6 +12,7 @@ use super::Client;
 use super::Clients;
 use super::CLIENT_CONN_SIZE;
 use super::HELP;
+use crate::Command;
 
 /// Registers a new client, communicates with it and removes it afterwards.
 ///
@@ -79,10 +82,14 @@ pub async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> boo
         Err(_) => return true,
     }
     .trim();
-    let (messages, quit) = match message {
-        "quit" => (vec![Message::close()], true),
+    let cmd = match Command::from_str(message) {
+        Ok(cmd) => cmd,
+        Err(_) => return true,
+    };
+    let (messages, quit) = match cmd {
+        Command::Quit => (vec![Message::close()], true),
         // The `Filter` trait blocks using `.map()` so we have to do it manually.
-        "h" | "help" => (
+        Command::Help => (
             vec![
                 Message::text(HELP[0]),
                 Message::text(HELP[1]),
@@ -94,7 +101,7 @@ pub async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> boo
             ],
             false,
         ),
-        _ => (vec![Message::text(message)], false),
+        Command::IntCode(ic) => (vec![Message::text(format!("{:?}", ic))], false),
     };
 
     let locked = clients.lock().await;
