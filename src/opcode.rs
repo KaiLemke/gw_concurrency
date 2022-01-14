@@ -1,10 +1,10 @@
 //! Calculating intcodes depending on opcodes in intcodes
 
 use displaydoc::Display;
-use std::error;
+use thiserror::Error;
 
 /// Any Errors returned creating `OpCode`s or executing them
-#[derive(Debug, Display, PartialEq)]
+#[derive(Debug, Display, Error, PartialEq)]
 pub enum Error {
     /// There is no `OpCode` associated with the number found at the given index.
     InvalidOpCode,
@@ -21,8 +21,6 @@ pub enum Error {
     /// The index to write the calculation result to does not exist.
     InvalidResult,
 }
-
-impl error::Error for Error {}
 
 /// The result of any operation related to `OpCode`s
 pub type Result<T> = std::result::Result<T, Error>;

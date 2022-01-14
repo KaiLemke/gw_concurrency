@@ -1,27 +1,20 @@
 //! Reading and writing intcodes
 
+use displaydoc::Display;
 use std::num::ParseIntError;
-use std::{error, fmt};
+use thiserror::Error;
 
 /// An intcode is a non-empty list of integers.
 pub type IntCode = Vec<usize>;
 
 /// Any errors that occur when parsing a string to an intcode
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Display, Error, PartialEq)]
 pub enum Error {
     /// String does not look like a `Vec`
     ParseVec,
     /// The list does not contain integers only
     ParseInt(ParseIntError),
 }
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl error::Error for Error {}
 
 /// Parses a string to an `IntCode`.
 ///
