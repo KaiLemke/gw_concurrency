@@ -13,6 +13,7 @@ use super::Clients;
 use super::CLIENT_CONN_SIZE;
 use super::HELP;
 use crate::Command;
+use crate::OpCode;
 
 /// Registers a new client, communicates with it and removes it afterwards.
 ///
@@ -101,7 +102,15 @@ pub async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> boo
             ],
             false,
         ),
-        Command::IntCode(ic) => (vec![Message::text(format!("{:?}", ic))], false),
+        // Either the calculation failed or was finished with `OpCode::Helt`.
+        // So we alway have to quit.
+        Command::IntCode(ic) => {
+            let txt = match OpCode::process(ic) {
+                Ok(ic) => format!("{:?}", ic),
+                Err(err) => format!("Invalid OpCode: {:?}", err),
+            };
+            (vec![Message::text(txt)], true)
+        }
     };
 
     let locked = clients.lock().await;
