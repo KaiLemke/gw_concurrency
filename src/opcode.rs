@@ -1,10 +1,12 @@
 //! Calculating intcodes depending on opcodes in intcodes
 
 use displaydoc::Display;
-use std::error;
+use thiserror::Error;
+
+use crate::IntCode;
 
 /// Any Errors returned creating `OpCode`s or executing them
-#[derive(Debug, Display, PartialEq, Eq)]
+#[derive(Debug, Display, Error, PartialEq)]
 pub enum Error {
     /// There is no `OpCode` associated with the number found at the given index.
     InvalidOpCode,
@@ -21,8 +23,6 @@ pub enum Error {
     /// The index to write the calculation result to does not exist.
     InvalidResult,
 }
-
-impl error::Error for Error {}
 
 /// The result of any operation related to `OpCode`s
 pub type Result<T> = std::result::Result<T, Error>;
@@ -71,7 +71,7 @@ impl OpCode {
     /// let mut too_short_list = vec![1,0];
     /// assert_eq!(Err(Error::MissingArgs), OpCode::process(too_short_list));
     /// ```
-    pub fn process(mut cmd_list: Vec<usize>) -> Result<Vec<usize>> {
+    pub fn process(mut cmd_list: IntCode) -> Result<IntCode> {
         let mut idx = Some(0);
         while idx.is_some() {
             idx = OpCode::new(idx.unwrap(), &cmd_list)?.execute(&mut cmd_list)?;
@@ -123,7 +123,7 @@ impl OpCode {
     /// assert_eq!(new_idx, None);
     /// assert_eq!(tst_cmd_list[..], exp);
     /// ```
-    pub fn execute(&self, cmd_list: &mut Vec<usize>) -> Result<Option<usize>> {
+    pub fn execute(&self, cmd_list: &mut IntCode) -> Result<Option<usize>> {
         match self {
             Self::Add(idx) => {
                 let (args, result, next_opcode) = Self::check_indices(cmd_list, *idx, 2)?;
@@ -147,10 +147,10 @@ impl OpCode {
     /// * The index where the calculation result should be written to.
     /// * The next `OpCode`'s index.
     fn check_indices(
-        cmd_list: &mut Vec<usize>,
+        cmd_list: &mut IntCode,
         opcode: usize,
         num_args: usize,
-    ) -> Result<(Vec<usize>, usize, usize)> {
+    ) -> Result<(IntCode, usize, usize)> {
         // If we have 2 args then first arg is opcode + 1, second opcode + 2,
         // so we look up where to write the result to at opcode + 3.
         let result = opcode + num_args + 1;
@@ -232,7 +232,7 @@ mod tests {
 
     #[test]
     fn tst_check_indices_ok() {
-        let mut cmd_list: Vec<usize> = vec![0, 1, 2, 3, 3, 2, 1];
+        let mut cmd_list: IntCode = vec![0, 1, 2, 3, 3, 2, 1];
         let (args, result, next_opcode) = OpCode::check_indices(&mut cmd_list, 0, 4).unwrap();
         assert_eq!(vec![1, 2, 3, 3], args);
         assert_eq!(2, result);
@@ -241,7 +241,7 @@ mod tests {
 
     #[test]
     fn tst_check_indices_args_indices() {
-        let mut cmd_list: Vec<usize> = vec![0, 0, 0];
+        let mut cmd_list: IntCode = vec![0, 0, 0];
         assert_eq!(
             Err(Error::MissingArgs),
             OpCode::check_indices(&mut cmd_list, 0, 3)
@@ -250,7 +250,7 @@ mod tests {
 
     #[test]
     fn tst_check_indices_args_values() {
-        let mut cmd_list: Vec<usize> = vec![0, 8, 0, 0];
+        let mut cmd_list: IntCode = vec![0, 8, 0, 0];
         assert_eq!(
             Err(Error::InvalidArgIndices),
             OpCode::check_indices(&mut cmd_list, 0, 1)
@@ -259,7 +259,7 @@ mod tests {
 
     #[test]
     fn tst_check_indices_next_opcode() {
-        let mut cmd_list: Vec<usize> = vec![0, 0];
+        let mut cmd_list: IntCode = vec![0, 0];
         assert_eq!(
             Err(Error::NoNextOpCode),
             OpCode::check_indices(&mut cmd_list, 0, 0)
@@ -268,13 +268,13 @@ mod tests {
 
     #[test]
     fn tst_check_indices_result() {
-        let mut cmd_list: Vec<usize> = vec![0];
+        let mut cmd_list: IntCode = vec![0];
         assert_eq!(
             Err(Error::MissingResult),
             OpCode::check_indices(&mut cmd_list, 0, 0)
         );
 
-        let mut cmd_list: Vec<usize> = vec![0, 3, 1];
+        let mut cmd_list: IntCode = vec![0, 3, 1];
         assert_eq!(
             Err(Error::InvalidResult),
             OpCode::check_indices(&mut cmd_list, 0, 0)

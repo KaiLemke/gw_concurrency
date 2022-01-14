@@ -9,7 +9,7 @@ use warp::ws::{Message, WebSocket};
 use super::Client;
 use super::Clients;
 use super::CLIENT_CONN_SIZE;
-use super::HELP;
+use crate::Command;
 
 /// Registers a new client, communicates with it and removes it afterwards.
 ///
@@ -71,43 +71,14 @@ pub async fn client_connection(ws: WebSocket, clients: Clients) {
 /// and it can be removed from `clients`.
 ///
 /// If further messages are expected, `false` is returned.
-async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
+pub async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
     println!("received message from {}: {:?}", client_id, msg);
 
-    let message = match msg.to_str() {
-        Ok(v) => v,
+    let cmd = match Command::try_from(msg) {
+        Ok(cmd) => cmd,
         Err(_) => return true,
-    }
-    .trim();
-    let (messages, quit) = match message {
-        "quit" => (vec![Message::close()], true),
-        // The `Filter` trait blocks using `.map()` so we have to do it manually.
-        "help" => (
-            vec![
-                Message::text(HELP[0]),
-                Message::text(HELP[1]),
-                Message::text(HELP[2]),
-                Message::text(HELP[3]),
-                Message::text(HELP[4]),
-                Message::text(HELP[5]),
-                Message::text(HELP[6]),
-            ],
-            false,
-        ),
-        "h" => (
-            vec![
-                Message::text(HELP[0]),
-                Message::text(HELP[1]),
-                Message::text(HELP[2]),
-                Message::text(HELP[3]),
-                Message::text(HELP[4]),
-                Message::text(HELP[5]),
-                Message::text(HELP[6]),
-            ],
-            false,
-        ),
-        _ => (vec![Message::text(message)], false),
     };
+    let (messages, quit) = cmd.reply();
 
     let locked = clients.lock().await;
     match locked.get(client_id) {
