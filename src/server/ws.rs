@@ -1,7 +1,6 @@
 //! Manages `WebSocket` connections with clients.
 
 use futures::{FutureExt, StreamExt};
-use std::str::FromStr;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use uuid::Uuid;
@@ -75,12 +74,7 @@ pub async fn client_connection(ws: WebSocket, clients: Clients) {
 pub async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> bool {
     println!("received message from {}: {:?}", client_id, msg);
 
-    let message = match msg.to_str() {
-        Ok(v) => v,
-        Err(_) => return true,
-    }
-    .trim();
-    let cmd = match Command::from_str(message) {
+    let cmd = match Command::try_from(msg) {
         Ok(cmd) => cmd,
         Err(_) => return true,
     };

@@ -35,6 +35,12 @@ pub enum Error {
     ParseIntCode(#[from] intcode::Error),
 }
 
+impl From<()> for Error {
+    fn from(_: ()) -> Self {
+        Error::ParseMessage
+    }
+}
+
 /// A command parse from a client's message
 ///
 /// # Examples
@@ -105,5 +111,15 @@ impl FromStr for Command {
                 Ok(Self::IntCode(code))
             }
         }
+    }
+}
+
+impl TryFrom<Message> for Command {
+    type Error = Error;
+
+    fn try_from(value: Message) -> Result<Self, Self::Error> {
+        let s = value.to_str()?;
+        let cmd = Self::from_str(s.trim())?;
+        Ok(cmd)
     }
 }
