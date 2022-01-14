@@ -13,7 +13,7 @@ pub enum Error {
     /// String does not look like a `Vec`
     ParseVec,
     /// The list does not contain integers only
-    ParseInt(ParseIntError),
+    ParseInt(#[from] ParseIntError),
 }
 
 /// Parses a string to an `IntCode`.

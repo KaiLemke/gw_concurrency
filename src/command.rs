@@ -1,8 +1,19 @@
 //! Commands sent from client to server
 
+use displaydoc::Display;
 use std::str::FromStr;
+use thiserror::Error;
 
 use crate::intcode::{self, IntCode};
+
+/// Any error that occurs on handling `Command`s
+#[derive(Debug, Display, Error, PartialEq)]
+pub enum Error {
+    /// Could not parse message to string
+    ParseMessage,
+    /// Could not parse string to intcode
+    ParseIntCode(#[from] intcode::Error),
+}
 
 /// A command parse from a client's message
 ///
@@ -37,7 +48,7 @@ impl Command {
 }
 
 impl FromStr for Command {
-    type Err = intcode::Error;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
