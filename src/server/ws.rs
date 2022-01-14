@@ -1,8 +1,7 @@
 //! Manages `WebSocket` connections with clients.
 
-use std::str::FromStr;
-
 use futures::{FutureExt, StreamExt};
+use std::str::FromStr;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use uuid::Uuid;
@@ -11,9 +10,7 @@ use warp::ws::{Message, WebSocket};
 use super::Client;
 use super::Clients;
 use super::CLIENT_CONN_SIZE;
-use super::HELP;
 use crate::Command;
-use crate::OpCode;
 
 /// Registers a new client, communicates with it and removes it afterwards.
 ///
@@ -87,31 +84,7 @@ pub async fn client_msg(client_id: &str, msg: Message, clients: &Clients) -> boo
         Ok(cmd) => cmd,
         Err(_) => return true,
     };
-    let (messages, quit) = match cmd {
-        Command::Quit => (vec![Message::close()], true),
-        // The `Filter` trait blocks using `.map()` so we have to do it manually.
-        Command::Help => (
-            vec![
-                Message::text(HELP[0]),
-                Message::text(HELP[1]),
-                Message::text(HELP[2]),
-                Message::text(HELP[3]),
-                Message::text(HELP[4]),
-                Message::text(HELP[5]),
-                Message::text(HELP[6]),
-            ],
-            false,
-        ),
-        // Either the calculation failed or was finished with `OpCode::Helt`.
-        // So we alway have to quit.
-        Command::IntCode(ic) => {
-            let txt = match OpCode::process(ic) {
-                Ok(ic) => format!("{:?}", ic),
-                Err(err) => format!("Invalid OpCode: {:?}", err),
-            };
-            (vec![Message::text(txt)], true)
-        }
-    };
+    let (messages, quit) = cmd.reply();
 
     let locked = clients.lock().await;
     match locked.get(client_id) {
