@@ -4,7 +4,7 @@ use displaydoc::Display;
 use std::error;
 
 /// Any Errors returned creating `OpCode`s or executing them
-#[derive(Debug, Display, PartialEq, Eq)]
+#[derive(Debug, Display, PartialEq)]
 pub enum Error {
     /// There is no `OpCode` associated with the number found at the given index.
     InvalidOpCode,
