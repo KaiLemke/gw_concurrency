@@ -10,12 +10,19 @@ name = "opcode"
 name = "opcs"
 path = "src/bin/server.rs"
 
+[[bin]]
+name = "client"
+path = "src/bin/client.rs"
+
 [dependencies]
 displaydoc = "0.2.3"
 futures = "0.3.19"
+futures-channel = "0.3"
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 tokio = { version = "1.15.0", features = ["full"] }
 tokio-stream = "0.1.8"
+tokio-tungstenite = "0.16.1"
 uuid = { version = "0.8.2", features = ["v4"] }
 warp = "0.3.2"
-
-[features]
+url = "2.0.0"
+clap = { version = "3.0.6", features = ["derive"] }
