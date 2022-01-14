@@ -51,7 +51,7 @@ impl OpCode {
     /// assert_eq!(tst_cmd_list[..], [1, 0, 0, 2, 2, 0, 3, 6, 99]);
     ///
     /// // Go on with the new opcode at `new_idx`.
-    /// let exp = [1, 0, 0, 2, 2, 0, 2, 6, 99]
+    /// let exp = [1, 0, 0, 2, 2, 0, 2, 6, 99];
     /// let operation = OpCode::new(new_idx, &mut tst_cmd_list).unwrap();
     /// let new_idx = operation.execute(&mut tst_cmd_list).unwrap().unwrap();
     /// // Now the next opcode is at index 8 and the result is at index 6.
@@ -70,7 +70,7 @@ impl OpCode {
             Self::Add(idx) => {
                 let _ = cmd_list[..]
                     .get(idx + 3)
-                    .ok_or_else(|| "execute(): index out of bounds")?;
+                    .ok_or("execute(): index out of bounds")?;
                 let idx_op1 = cmd_list[idx + 1];
                 let idx_op2 = cmd_list[idx + 2];
                 let idx_dst = cmd_list[idx + 3];
@@ -80,7 +80,7 @@ impl OpCode {
             Self::Mul(idx) => {
                 let _ = cmd_list[..]
                     .get(idx + 3)
-                    .ok_or_else(|| "execute(): index out of bounds")?;
+                    .ok_or("execute(): index out of bounds")?;
                 let idx_op1 = cmd_list[idx + 1];
                 let idx_op2 = cmd_list[idx + 2];
                 let idx_dst = cmd_list[idx + 3];
@@ -125,8 +125,8 @@ impl OpCode {
     /// assert_eq!(OpCode::new(2, &mut tst_vec), Err("invalid op code"));
     /// assert_eq!(OpCode::new(100, &mut tst_vec), Err("index out of bounds"));
     /// ```
-    pub fn new(idx: usize, cmd_list: &Vec<usize>) -> Result<Self, &str> {
-        let cmd_list_slice = cmd_list[..].get(idx).ok_or_else(|| "index out of bounds")?;
+    pub fn new(idx: usize, cmd_list: &[usize]) -> Result<Self, &str> {
+        let cmd_list_slice = cmd_list[..].get(idx).ok_or("index out of bounds")?;
         Self::parse(idx, *cmd_list_slice)
     }
 }
