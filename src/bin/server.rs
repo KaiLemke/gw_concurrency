@@ -3,8 +3,9 @@ use tokio::sync::Mutex;
 use warp::Filter;
 
 use opcode::server::{
+    filter::with_clients,
     handler::{greeting_handler, opcode_handler},
-    with_clients, Clients,
+    Clients,
 };
 
 #[tokio::main]

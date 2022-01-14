@@ -1,11 +1,12 @@
 //! OpCode Server
 
-use std::{collections::HashMap, convert::Infallible, result::Result, sync::Arc};
+use std::{collections::HashMap, result::Result, sync::Arc};
 use tokio::sync::{mpsc, Mutex};
-use warp::{ws::Message, Filter};
+use warp::ws::Message;
 
 use crate::command::HELP;
 
+pub mod filter;
 pub mod handler;
 pub mod ws;
 
@@ -33,10 +34,3 @@ pub struct Client {
 
 /// A list of registered clients keyed by UUIDs
 pub type Clients = Arc<Mutex<HashMap<String, Client>>>;
-
-/// `warp::Filter` for handling clients
-pub fn with_clients(
-    clients: Clients,
-) -> impl Filter<Extract = (Clients,), Error = Infallible> + Clone {
-    warp::any().map(move || clients.clone())
-}
